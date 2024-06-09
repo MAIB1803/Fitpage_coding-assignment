@@ -5,6 +5,7 @@ import '../models/sub_criteria.dart';
 import 'variable_detail.dart';
 import 'indicator_detail.dart';
 import 'value_detail.dart';
+import 'dart:convert';
 
 class CriteriaDetail extends StatelessWidget {
   final Criteria criteria;
@@ -18,79 +19,123 @@ class CriteriaDetail extends StatelessWidget {
         child: Container(
           width: 400,
           height: 400,
-          color: Colors.black, // Adjust the width as needed
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: double.infinity,
-                  color: const Color.fromARGB(255, 0, 125, 183),
-                  padding: EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        criteria.name,
-                        style: TextStyle(
-                          color: const Color.fromARGB(255, 255, 255, 255),
-                          fontSize: 16,
-                        ),
+          color: Colors.black,
+          padding: EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                color: const Color.fromARGB(255, 0, 125, 183),
+                padding: EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      criteria.name,
+                      style: TextStyle(
+                        color: const Color.fromARGB(255, 255, 255, 255),
+                        fontSize: 16,
                       ),
-                      SizedBox(height: 4),
-                      Text(
-                        criteria.tag,
-                        style: TextStyle(
-                          color: criteria.color == 'green'
-                              ? Colors.green
-                              : criteria.color == 'red'
-                                  ? Colors.red
-                                  : Colors.yellow,
-                          fontSize: 12,
-                        ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      criteria.tag,
+                      style: TextStyle(
+                        color: criteria.color == 'green'
+                            ? Colors.green
+                            : criteria.color == 'red'
+                                ? Colors.red
+                                : Colors.yellow,
+                        fontSize: 12,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                SizedBox(height: 16),
-                ...criteria.criteria.map((subCriteria) {
-                  if (subCriteria.type == "plain_text") {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: Text(
-                        subCriteria.text,
-                        style: TextStyle(
-                            color: const Color.fromARGB(255, 255, 255, 255),
-                            fontSize: 16),
-                      ),
-                    );
-                  } else if (subCriteria.type == "variable") {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: RichText(
-                        text: TextSpan(
-                          children: _getVariableTextSpans(context, subCriteria),
-                          style: TextStyle(
-                              color: const Color.fromARGB(255, 255, 255, 255),
-                              fontSize: 16),
-                        ),
-                      ),
-                    );
-                  }
-                  return Container();
-                }).toList(),
-              ],
-            ),
+              ),
+              SizedBox(height: 16),
+              ..._buildCriteriaList(context, criteria.criteria),
+            ],
           ),
         ),
       ),
     );
   }
 
+  List<Widget> _buildCriteriaList(
+      BuildContext context, List<SubCriteria> criteriaList) {
+    List<Widget> widgets = [];
+    for (var i = 0; i < criteriaList.length; i++) {
+      var subCriteria = criteriaList[i];
+      if (subCriteria.type == "plain_text") {
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              utf8.decode(subCriteria.text.runes.toList()),
+              style: TextStyle(
+                  color: const Color.fromARGB(255, 255, 255, 255),
+                  fontSize: 16),
+            ),
+          ),
+        );
+      } else if (subCriteria.type == "variable") {
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: RichText(
+              text: TextSpan(
+                children: _getVariableTextSpans(context, subCriteria),
+                style: TextStyle(
+                    color: const Color.fromARGB(255, 255, 255, 255),
+                    fontSize: 16),
+              ),
+            ),
+          ),
+        );
+      } else if (subCriteria.type == "value") {
+        widgets.add(
+          ListTile(
+            title: Text(
+              utf8.decode(subCriteria.text.runes.toList()),
+              style: TextStyle(
+                  color: const Color.fromARGB(255, 255, 255, 255),
+                  fontSize: 16),
+            ),
+            onTap: () {
+              if (subCriteria.variable != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ValueDetail(
+                      name: criteria.name,
+                      value: subCriteria.variable!,
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      }
+      if (i < criteriaList.length - 1) {
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            child: Text(
+              'and',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ),
+        );
+      }
+    }
+    return widgets;
+  }
+
   List<TextSpan> _getVariableTextSpans(
       BuildContext context, SubCriteria subCriteria) {
-    String text = subCriteria.text;
+    String text = utf8.decode(subCriteria.text.runes.toList());
     List<TextSpan> children = [];
     RegExp regExp = RegExp(r'\$\d+');
     Iterable<RegExpMatch> matches = regExp.allMatches(text);
@@ -123,8 +168,10 @@ class CriteriaDetail extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        ValueDetail(name: variableKey, value: variable),
+                    builder: (context) => ValueDetail(
+                      name: subCriteria.text,
+                      value: variable,
+                    ),
                   ),
                 );
               },
