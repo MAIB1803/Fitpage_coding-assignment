@@ -22,31 +22,47 @@ class CriteriaList extends StatelessWidget {
                 child: ListView.builder(
                   itemCount: criteria.length,
                   itemBuilder: (context, index) {
-                    return ListTile(
-                      title: Text(
-                        criteria[index].name,
-                        style: TextStyle(color: Colors.white, fontSize: 18),
-                      ),
-                      subtitle: Text(
-                        criteria[index].tag,
-                        style: TextStyle(
-                          color: criteria[index].color == 'green'
-                              ? Colors.green
-                              : criteria[index].color == 'red'
-                                  ? Colors.red
-                                  : Colors.yellow,
-                          fontSize: 12,
-                        ),
-                      ),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                CriteriaDetail(criteria: criteria[index]),
+                    return Column(
+                      children: [
+                        ListTile(
+                          title: Text(
+                            criteria[index].name,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              decoration: TextDecoration
+                                  .underline, // Underline for links
+                            ),
                           ),
-                        );
-                      },
+                          subtitle: Text(
+                            criteria[index].tag,
+                            style: TextStyle(
+                              color: criteria[index].color == 'green'
+                                  ? Colors.green
+                                  : criteria[index].color == 'red'
+                                      ? Colors.red
+                                      : Colors.yellow,
+                              fontSize: 12,
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    CriteriaDetail(criteria: criteria[index]),
+                              ),
+                            );
+                          },
+                        ),
+                        Divider(
+                          color: Colors.white, // Dotted line color
+                          thickness: 1,
+                          height: 1,
+                          indent: 16,
+                          endIndent: 16,
+                        ),
+                      ],
                     );
                   },
                 ),
