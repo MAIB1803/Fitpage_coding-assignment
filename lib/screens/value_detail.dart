@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/DottedLinePainter.dart';
+
 class ValueDetail extends StatelessWidget {
   final String name;
   final Map<String, dynamic> value;
@@ -23,10 +25,20 @@ class ValueDetail extends StatelessWidget {
               children: [
                 SizedBox(height: 16),
                 if (values != null)
-                  ...values.map<Widget>((v) => Text(
-                        v.toString(),
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      )),
+                  ...values.asMap().entries.map<Widget>((entry) {
+                    int index = entry.key;
+                    var v = entry.value;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          v.toString(),
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                        if (index < values.length - 1) Divider(),
+                      ],
+                    );
+                  }).toList(),
               ],
             ),
           ),
